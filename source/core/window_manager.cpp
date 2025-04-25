@@ -45,6 +45,7 @@ namespace rose_engine
             opengl::shader{"shaders/wireframe.frag", GL_FRAGMENT_SHADER}
         };
 
+
         omath::opengl_engine::Camera camera({0, 0, 4}, {}, {800, 600}, omath::projection::FieldOfView::FromDegrees(90.f), 0.01, 1000);
 
         GLuint vao, vbo;
@@ -60,6 +61,7 @@ namespace rose_engine
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0,3,GL_FLOAT,GL_FALSE,sizeof(omath::Vector3<float>),(void*)0);
         glBindVertexArray(0);
+
 
         while (m_opened)
         {
@@ -111,9 +113,26 @@ namespace rose_engine
                 angles.yaw += omath::opengl_engine::YawAngle::FromDegrees(1);
                 camera.SetViewAngles(angles);
             }
+            if (GetAsyncKeyState('R') & 0x8000)
+            {
+                auto angles = camera.GetViewAngles();
+                angles.roll += omath::opengl_engine::RollAngle::FromDegrees(1);
+                camera.SetViewAngles(angles);
+            }
+            if (GetAsyncKeyState('Q') & 0x8000)
+            {
+                auto angles = camera.GetViewAngles();
+                angles.roll -= omath::opengl_engine::RollAngle::FromDegrees(1);
+                camera.SetViewAngles(angles);
+            }
             while (SDL_PollEvent(&ev))
                 process_event(ev);
 
+
+            int w,h;
+            SDL_GetWindowSizeInPixels(m_sdl_window,&w, &h);
+            camera.SetViewPort({static_cast<float>(w), static_cast<float>(h)});
+            glViewport(0, 0, w, h);
             glClearColor(0.f, 0.f, 0.f, 1.f);
             glClear(GL_COLOR_BUFFER_BIT);
 
