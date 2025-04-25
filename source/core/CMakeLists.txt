@@ -1,0 +1,1 @@
+target_sources(rose_engine PRIVATE rose_context.cpp window_manager.cpp shader_program.cpp)
