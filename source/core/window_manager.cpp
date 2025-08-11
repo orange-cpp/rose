@@ -3,6 +3,7 @@
 //
 #include "window_manager.hpp"
 
+#include <print>
 #include <stdexcept>
 #include <Windows.h>
 #include <GL/glew.h>
@@ -10,6 +11,8 @@
 #include <SDL3/SDL.h>
 
 #include "omath/engines/opengl_engine/formulas.hpp"
+#include "omath/engines/source_engine/camera.hpp"
+#include "omath/engines/source_engine/formulas.hpp"
 #include "opengl/gl_program.hpp"
 #include "opengl/gl_shader.hpp"
 
@@ -46,7 +49,7 @@ namespace rose_engine
         };
 
 
-        omath::opengl_engine::Camera camera({0, 0, 4}, {}, {800, 600}, omath::projection::FieldOfView::FromDegrees(90.f), 0.01, 1000);
+        omath::source_engine::Camera camera({-10, 0, 0}, {}, {800, 600}, omath::projection::FieldOfView::from_degrees(90.f), 0.01, 1000);
 
         GLuint vao, vbo;
         glGenVertexArrays(1,&vao);
@@ -69,61 +72,65 @@ namespace rose_engine
 
             constexpr float speed = 0.1;
             if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
-                camera.SetOrigin(camera.GetOrigin() + omath::opengl_engine::RightVector(camera.GetViewAngles()) * speed);
+            {
+                auto vec = omath::source_engine::right_vector(camera.get_view_angles());
+                std::println("Right {} {} {}", vec.x, vec.y, vec.z);
+                camera.set_origin(camera.get_origin() + vec * speed);
+            }
 
             if (GetAsyncKeyState(VK_LEFT) & 0x8000)
-                camera.SetOrigin(camera.GetOrigin() + -omath::opengl_engine::RightVector(camera.GetViewAngles()) * speed);
+                camera.set_origin(camera.get_origin() + -omath::source_engine::right_vector(camera.get_view_angles()) * speed);
 
             if (GetAsyncKeyState(VK_UP) & 0x8000)
-                camera.SetOrigin(camera.GetOrigin() + omath::opengl_engine::ForwardVector(camera.GetViewAngles()) * speed);
+                camera.set_origin(camera.get_origin() + omath::source_engine::forward_vector(camera.get_view_angles()) * speed);
 
             if (GetAsyncKeyState(VK_DOWN) & 0x8000)
-                camera.SetOrigin(camera.GetOrigin() + -omath::opengl_engine::ForwardVector(camera.GetViewAngles()) * speed);
+                camera.set_origin(camera.get_origin() + -omath::source_engine::forward_vector(camera.get_view_angles()) * speed);
 
             if (GetAsyncKeyState(VK_SPACE) & 0x8000)
-                camera.SetOrigin(camera.GetOrigin() + omath::opengl_engine::kAbsUp * speed);
+                camera.set_origin(camera.get_origin() + omath::source_engine::k_abs_up * speed);
 
             if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
-                camera.SetOrigin(camera.GetOrigin() + -omath::opengl_engine::kAbsUp* speed);
+                camera.set_origin(camera.get_origin() + -omath::source_engine::k_abs_up* speed);
 
             if (GetAsyncKeyState('W') & 0x8000)
             {
-                auto angles = camera.GetViewAngles();
-                angles.pitch -= omath::opengl_engine::PitchAngle::FromDegrees(1);
-                camera.SetViewAngles(angles);
+                auto angles = camera.get_view_angles();
+                angles.pitch -= omath::source_engine::PitchAngle::from_degrees(1);
+                camera.set_view_angles(angles);
             }
 
             if (GetAsyncKeyState('S') & 0x8000)
             {
-                auto angles = camera.GetViewAngles();
-                angles.pitch += omath::opengl_engine::PitchAngle::FromDegrees(1);
-                camera.SetViewAngles(angles);
+                auto angles = camera.get_view_angles();
+                angles.pitch += omath::source_engine::PitchAngle::from_degrees(1);
+                camera.set_view_angles(angles);
             }
 
             if (GetAsyncKeyState('A') & 0x8000)
             {
-                auto angles = camera.GetViewAngles();
-                angles.yaw -= omath::opengl_engine::YawAngle::FromDegrees(1);
-                camera.SetViewAngles(angles);
+                auto angles = camera.get_view_angles();
+                angles.yaw += omath::source_engine::YawAngle::from_degrees(1);
+                camera.set_view_angles(angles);
             }
 
             if (GetAsyncKeyState('D') & 0x8000)
             {
-                auto angles = camera.GetViewAngles();
-                angles.yaw += omath::opengl_engine::YawAngle::FromDegrees(1);
-                camera.SetViewAngles(angles);
+                auto angles = camera.get_view_angles();
+                angles.yaw -= omath::source_engine::YawAngle::from_degrees(1);
+                camera.set_view_angles(angles);
             }
             if (GetAsyncKeyState('R') & 0x8000)
             {
-                auto angles = camera.GetViewAngles();
-                angles.roll += omath::opengl_engine::RollAngle::FromDegrees(1);
-                camera.SetViewAngles(angles);
+                auto angles = camera.get_view_angles();
+                angles.roll += omath::source_engine::RollAngle::from_degrees(1);
+                camera.set_view_angles(angles);
             }
             if (GetAsyncKeyState('Q') & 0x8000)
             {
-                auto angles = camera.GetViewAngles();
-                angles.roll -= omath::opengl_engine::RollAngle::FromDegrees(1);
-                camera.SetViewAngles(angles);
+                auto angles = camera.get_view_angles();
+                angles.roll -= omath::opengl_engine::RollAngle::from_degrees(1);
+                camera.set_view_angles(angles);
             }
             while (SDL_PollEvent(&ev))
                 process_event(ev);
@@ -131,12 +138,13 @@ namespace rose_engine
 
             int w,h;
             SDL_GetWindowSizeInPixels(m_sdl_window,&w, &h);
-            camera.SetViewPort({static_cast<float>(w), static_cast<float>(h)});
+            camera.set_view_port({static_cast<float>(w), static_cast<float>(h)});
             glViewport(0, 0, w, h);
             glClearColor(0.f, 0.f, 0.f, 1.f);
             glClear(GL_COLOR_BUFFER_BIT);
 
-            program.pass_mat_to_uniform("uMVP", camera.GetViewProjectionMatrix());
+            auto x = camera.get_view_projection_matrix().transposed();
+            program.pass_mat_to_uniform("uMVP", x);
             program.pass_vec_to_uniform("uColor", {1.f, 1.f, 1.f});
             program.use();
             glBindVertexArray(vao);

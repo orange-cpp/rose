@@ -9,6 +9,7 @@
 #include <omath/mat.hpp>
 
 #include "omath/engines/opengl_engine/camera.hpp"
+#include "omath/engines/source_engine/constants.hpp"
 
 
 namespace rose_engine::opengl
@@ -18,7 +19,7 @@ namespace rose_engine::opengl
     public:
         explicit program(const std::initializer_list<shader>& shaders);
         void use() const;
-        void pass_mat_to_uniform(const std::string_view& name, const omath::opengl_engine::Mat4x4& mat);
+        void pass_mat_to_uniform(const std::string_view& name, const omath::source_engine::Mat4X4& mat);
         void pass_vec_to_uniform(const std::string_view& name, const omath::Vector3<float>& mat);
         ~program();
     private:

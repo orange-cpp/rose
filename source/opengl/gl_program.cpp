@@ -5,6 +5,8 @@
 
 #include <stdexcept>
 
+#include "omath/engines/source_engine/constants.hpp"
+
 namespace rose_engine::opengl
 {
     program::program(const std::initializer_list<shader>& shaders)
@@ -28,9 +30,9 @@ namespace rose_engine::opengl
         glUseProgram(m_prog_handle);
     }
 
-    void program::pass_mat_to_uniform(const std::string_view& name, const omath::opengl_engine::Mat4x4& mat)
+    void program::pass_mat_to_uniform(const std::string_view& name, const omath::source_engine::Mat4X4& mat)
     {
-        glUniformMatrix4fv(glGetUniformLocation(m_prog_handle, name.data()), 1, GL_FALSE, mat.RawArray().data());
+        glUniformMatrix4fv(glGetUniformLocation(m_prog_handle, name.data()), 1, GL_FALSE, mat.raw_array().data());
     }
 
     void program::pass_vec_to_uniform(const std::string_view& name, const omath::Vector3<float>& mat)
